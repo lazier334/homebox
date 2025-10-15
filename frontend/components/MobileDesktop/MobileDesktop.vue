@@ -85,7 +85,8 @@
             class="folder-popup-backdrop absolute inset-0 bg-black/50 z-20 flex items-center justify-center p-4"
             @click="closeFolderPopup">
             <!-- 弹窗主体：占比80%，不触发外部关闭事件 -->
-            <div class="folder-popup w-[80%] max-w-md bg-white rounded-xl overflow-hidden shadow-2xl" @click.stop>
+            <div class="folder-popup max-w-md bg-white rounded-xl overflow-hidden shadow-2xl" @click.stop>
+                <!-- <div class="folder-popup w-[80%] max-w-md bg-white rounded-xl overflow-hidden shadow-2xl" @click.stop> -->
 
                 <!-- 1. 弹窗顶部栏（显示当前文件夹名称 + 关闭按钮） -->
                 <div class="popup-header bg-white p-3 flex justify-between items-center border-b">
@@ -114,6 +115,12 @@
 
                 <!-- 2. 弹窗分页指示器（模仿手机桌面） -->
                 <div class="popup-page-indicators flex justify-center gap-3 mt-2 mb-3 z-20">
+                    <button
+                        v-if="typeof currentPopupItem?.path?.length == 'number' && -1 < currentPopupItem?.path?.length - 2"
+                        class="indicator px-4 py-1.5 text-sm rounded-full transition-all duration-300 font-medium bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        @click="handleLestItemClick(currentPopupItem)">
+                        ↑上级
+                    </button>
                     <button v-for="(page, idx) in 2" :key="`popup-indicator-${idx}`"
                         class="indicator px-4 py-1.5 text-sm rounded-full transition-all duration-300 font-medium"
                         :class="{
@@ -169,9 +176,38 @@
                         </div>
                     </div>
 
-                    <!-- 页面2：物品详情信息（列表布局） -->
+                    <!-- 页面2：简介，物品详情信息（列表布局） -->
                     <div class="popup-page popup-info-page flex-shrink-0 w-full h-full p-4 overflow-y-auto bg-white">
                         <div class="info-list space-y-4">
+
+
+                            <!-- 图片列表 - 轮播图显示 -->
+                            <div class="info-item p-3 border-b border-gray-200">
+                                <h4 class="text-xs text-gray-500 mb-3">图片列表</h4>
+                                <!-- http://localhost:3000/api/v1/items/e41586e0-71f1-4189-ac5e-2e76d59418dc/attachments/a78218d8-e1ef-4693-976b-e9b0d79a95ef -->
+                                <!-- Swiper 轮播图 -->
+                                <div v-if="currentPopupItem?.info?.attachments?.length" class="swiper-container">
+                                    <div class="swiper-wrapper">
+                                        <div class="swiper-slide"
+                                            v-for="attachment in currentPopupItem.info.attachments"
+                                            :key="attachment.id">
+                                            <img :src="getAttachmentUrl(currentPopupItem, attachment)"
+                                                :alt="attachment.name || '图片'"
+                                                class="w-full h-48 object-cover rounded-lg"
+                                                @click="openFullscreenImage(attachment)"
+                                                @error="handleAttachmentError" />
+                                        </div>
+                                    </div>
+
+                                    <!-- 分页器 -->
+                                    <div class="swiper-pagination"></div>
+
+                                    <!-- 导航按钮 -->
+                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-button-next"></div>
+                                </div>
+                            </div>
+
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">物品名称</h4>
                                 <p class="text-gray-800 font-medium">{{ currentPopupItem?.info?.name || '未知' }}</p>
@@ -182,32 +218,57 @@
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">描述信息</h4>
-                                <p class="text-gray-800">{{ currentPopupItem?.info?.description || '无描述信息' }}</p>
+                                <p class="text-gray-800">{{ currentPopupItem?.info?.description || '' }}</p>
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">内部物品数量</h4>
                                 <p class="text-gray-800">{{ (currentPopupItem?.children || []).length }} 个</p>
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
-                                <h4 class="text-xs text-gray-500 mb-1">图标地址</h4>
-                                <p class="text-gray-800 text-sm truncate">{{ currentPopupItem?.info?.imageUrl ||
-                                    '使用默认图标' }}
-                                </p>
+                                <h4 class="text-xs text-gray-500 mb-1">更新时间时间</h4>
+                                <p class="text-gray-800">{{ new Date(currentPopupItem?.info?.updatedAt).toLocaleString()
+                                }}</p>
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">创建时间</h4>
-                                <p class="text-gray-800">{{ currentPopupItem?.info?.createTime || '未知' }}</p>
+                                <p class="text-gray-800">{{ new Date(currentPopupItem?.info?.createdAt).toLocaleString()
+                                }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- 全屏图片查看器 -->
+        <div v-if="showFullscreenImage"
+            class="fullscreen-image-viewer fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+            @click="closeFullscreen">
+            <!-- 关闭按钮 -->
+            <button
+                class="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-all duration-300 z-10"
+                @click.stop="closeFullscreen">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <img :src="currentFullscreenImage" class="max-w-full max-h-full object-contain" alt="全屏图片" @click.stop />
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
+import { toast } from "@/components/ui/sonner";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+// 引入 Swiper
+import { Swiper } from 'swiper';
+import { Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 const api = useUserApi();
 
 // 原有Props和Emits（新增popup-close事件，可选）
@@ -364,7 +425,6 @@ const handleAddItem = () => {
 // ########## 弹窗核心交互逻辑（修改为单一弹窗） ##########
 // 1. 点击图标打开文件夹
 const handleItemClick = (item) => {
-    console.log(item)
     if (!item?.path) {
         item.path = [{
             "type": "item",
@@ -373,59 +433,61 @@ const handleItemClick = (item) => {
         }]
         item.path.nextUpdateTime = Date.now() - 10;
     }
-    if (!item?.path?.nextUpdateTime || item?.path?.nextUpdateTime < Date.now()) {
-        // 更新路径
-        api.items.fullpath(item.id).then(resp => {
-            if (resp.error) {
-                toast.error(t("items.toast.failed_load_item"));
-                return;
-            }
-            item.path = resp.data;
-            // 60秒内不再更新路径
-            item.path.nextUpdateTime = Date.now() + (60 * 1000);
-        }).catch(err => {
-            return;
-        });
-    }
-    // 获取基本信息
-    if (!item?.info?.nextUpdateTime || item?.info?.nextUpdateTime < Date.now()) {
-        // 更新物品信息
-        api.items.get(item.id).then(resp => {
-            if (resp.error) {
-                toast.error(t("items.toast.failed_load_item"));
-                return;
-            }
-            item.info = resp.data;
-            // 120秒内不再更新物品信息
-            item.info.nextUpdateTime = Date.now() + (2 * 60 * 1000);
-        }).catch(err => {
-            return;
-        });
-    }
-    // 获取子节点信息
-    if (!item?.children?.nextUpdateTime || item?.children?.nextUpdateTime < Date.now()) {
-        // 更新物品信息
-        api.items.getAll({
-            parentIds: [item.id],
-        }).then(resp => {
-            if (resp.error) {
-                toast.error(t("items.toast.failed_load_items"));
-                return;
-            }
-            // 清理多余的属性
-            resp.data.items.forEach(e => {
-                for (const k in e) {
-                    if (!['id', 'name', 'type', 'children'].includes(k)) delete e[k];
+    if (item?.type != "location") {
+        if (!item?.path?.nextUpdateTime || item?.path?.nextUpdateTime < Date.now()) {
+            // 更新路径
+            api.items.fullpath(item.id).then(resp => {
+                if (resp.error) {
+                    toast.error(t("items.toast.failed_load_item"));
+                    return;
                 }
-                if (!e.type) e.type = 'item';
-                if (!e.children) e.children = [];
-            })
-            item.children = resp.data.items;
-            // 120秒内不再更新物品信息
-            item.children.nextUpdateTime = Date.now() + (2 * 60 * 1000);
-        }).catch(err => {
-            return;
-        });
+                item.path = resp.data;
+                // 60秒内不再更新路径
+                item.path.nextUpdateTime = Date.now() + (60 * 1000);
+            }).catch(err => {
+                return;
+            });
+        }
+        // 获取基本信息
+        if (!item?.info?.nextUpdateTime || item?.info?.nextUpdateTime < Date.now()) {
+            // 更新物品信息
+            api.items.get(item.id).then(resp => {
+                if (resp.error) {
+                    toast.error(t("items.toast.failed_load_item"));
+                    return;
+                }
+                item.info = resp.data;
+                // 120秒内不再更新物品信息
+                item.info.nextUpdateTime = Date.now() + (2 * 60 * 1000);
+            }).catch(err => {
+                return;
+            });
+        }
+        // 获取子节点信息
+        if (!item?.children?.nextUpdateTime || item?.children?.nextUpdateTime < Date.now()) {
+            // 更新物品信息
+            api.items.getAll({
+                parentIds: [item.id],
+            }).then(resp => {
+                if (resp.error) {
+                    toast.error(t("items.toast.failed_load_items"));
+                    return;
+                }
+                // 清理多余的属性
+                resp.data.items.forEach(e => {
+                    for (const k in e) {
+                        if (!['id', 'name', 'type', 'children'].includes(k)) delete e[k];
+                    }
+                    if (!e.type) e.type = 'item';
+                    if (!e.children) e.children = [];
+                })
+                item.children = resp.data.items;
+                // 120秒内不再更新物品信息
+                item.children.nextUpdateTime = Date.now() + (2 * 60 * 1000);
+            }).catch(err => {
+                return;
+            });
+        }
     }
     // 添加缓存
     if (cacheItems[item.id] != item) cacheItems[item.id] = item;
@@ -455,6 +517,91 @@ const handleDetailClick = (item) => {
     if (item) emit('item-detail', item);
     if (item.id) location.pathname = '/item/' + item.id;
 };
+// 5. 上级按钮触发事件（外部实现逻辑）
+const handleLestItemClick = (item) => {
+    if (-1 < item.path.length - 2) {
+        handleBreadcrumbClick(item.path[item.path.length - 2])
+    }
+};
+
+// #regin 轮播图相关
+const swiperInstance = ref(null);
+
+// 获取附件 URL
+const getAttachmentUrl = (popupItem, attachment) => {
+    // 根据你的附件结构返回图片 URL
+    return `/api/v1/items/${popupItem.id}/attachments/${attachment.id}`
+};
+
+// 处理图片加载错误
+const handleAttachmentError = (event) => {
+    event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTIiIGR5PSIwLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPua1geahhjwvdGV4dD48L3N2Zz4=';
+};
+
+// 初始化轮播图
+const initSwiper = () => {
+    if (swiperInstance.value) {
+        swiperInstance.value.destroy();
+    }
+
+    nextTick(() => {
+        swiperInstance.value = new Swiper('.swiper-container', {
+            modules: [Pagination, Navigation],
+            slidesPerView: 1,
+            spaceBetween: 10,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            loop: true,
+            autoplay: {
+                delay: 3000,
+                disableOnInteraction: false,
+            },
+            // 响应式配置
+            breakpoints: {
+                640: {
+                    slidesPerView: 1,
+                    spaceBetween: 10,
+                },
+                768: {
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                }
+            }
+        });
+    });
+};
+
+// 监听弹窗显示状态，初始化轮播图
+watch(showItemPopup, (newVal) => {
+    if (newVal) {
+        nextTick(() => {
+            setTimeout(initSwiper, 100); // 稍延迟确保 DOM 渲染完成
+        });
+    }
+});
+// #endregin
+
+// 全屏图片查看相关状态
+const showFullscreenImage = ref(false);
+const currentFullscreenImage = ref('');
+
+// 打开全屏图片查看
+const openFullscreenImage = (attachment) => {
+    currentFullscreenImage.value = getAttachmentUrl(currentPopupItem.value, attachment);
+    showFullscreenImage.value = true;
+};
+
+// 关闭全屏查看
+const closeFullscreen = () => {
+    showFullscreenImage.value = false;
+};
+
 
 </script>
 
@@ -512,7 +659,7 @@ const handleDetailClick = (item) => {
 }
 
 .empty-state {
-    color: white;
+    color: black;
     text-align: center;
     padding: 2rem;
     opacity: 0.7;
@@ -578,5 +725,149 @@ const handleDetailClick = (item) => {
 .popup-page-indicators {
     bottom: 16px !important;
     z-index: 21 !important;
+}
+</style>
+
+<style scoped>
+/* Swiper 样式定制 */
+
+/* Swiper 样式定制 */
+.swiper-container {
+    position: relative;
+    /* 添加相对定位 */
+    width: 100%;
+    height: 200px;
+    margin: 0 auto;
+}
+
+.swiper-slide {
+    text-align: center;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 分页器样式 */
+:deep(.swiper-pagination) {
+    position: absolute;
+    /* 绝对定位在容器内 */
+    bottom: 10px;
+    /* 距离底部10px */
+    left: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+:deep(.swiper-pagination-bullet) {
+    background: #cbd5e0;
+    opacity: 0.7;
+}
+
+:deep(.swiper-pagination-bullet-active) {
+    background: #4a5568;
+}
+
+/* 导航按钮样式 */
+:deep(.swiper-button-prev),
+:deep(.swiper-button-next) {
+    position: absolute;
+    /* 绝对定位在容器内 */
+    top: 50%;
+    /* 垂直居中 */
+    transform: translateY(-50%);
+    color: #4a5568;
+    width: 30px;
+    height: 30px;
+    z-index: 10;
+}
+
+:deep(.swiper-button-prev) {
+    left: 10px;
+    /* 距离左侧10px */
+}
+
+:deep(.swiper-button-next) {
+    right: 10px;
+    /* 距离右侧10px */
+}
+
+:deep(.swiper-button-prev:after),
+:deep(.swiper-button-next:after) {
+    font-size: 20px;
+}
+
+/* 移动端适配 */
+@media (max-width: 640px) {
+    .swiper-container {
+        height: 160px;
+    }
+
+    :deep(.swiper-button-prev),
+    :deep(.swiper-button-next) {
+        display: none;
+        /* 移动端隐藏导航按钮 */
+    }
+}
+</style>
+
+<style scoped>
+/* 全屏图片查看器样式 */
+
+.fullscreen-image-viewer {
+    z-index: 50;
+    cursor: zoom-out;
+}
+
+/* 添加过渡动画 */
+.fullscreen-image-viewer {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* 图片样式 */
+.fullscreen-image-viewer img {
+    animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 关闭按钮样式 */
+.fullscreen-image-viewer button {
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.fullscreen-image-viewer button:hover {
+    transform: scale(1.1);
+    background-color: rgba(0, 0, 0, 0.8);
 }
 </style>
