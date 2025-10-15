@@ -24,8 +24,8 @@
                                 top: item.position?.top || null,
                                 width: `${iconSize}px`
                             }" :data-id="item.id" :data-location-id="location.id" @click.stop="handleItemClick(item)">
-                            <div
-                                class="icon-wrapper w-full aspect-square rounded-lg bg-white/80 flex items-center justify-center shadow-md overflow-hidden">
+                            <!-- <div class="icon-wrapper w-80px h-80px aspect-square rounded-lg bg-white/80 flex items-center justify-center shadow-md overflow-hidden"> -->
+                            <div class="image-container">
                                 <img v-if="getCachedImageUrl(item)" :src="getCachedImageUrl(item)" alt="Item icon"
                                     class="w-full h-full object-cover" @error="handleImageError(item)">
                                 <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
@@ -69,6 +69,7 @@
                     d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 7.757L3 16.136V19h2.864l8.379-8.379-2.864-2.864z" />
             </svg>
         </button>
+        <!--         
         <button
             class="add-item-btn absolute bottom-6 left-4 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors z-10"
             @click="handleAddItem">
@@ -78,6 +79,7 @@
                     clip-rule="evenodd" />
             </svg>
         </button>
+        -->
 
         <!-- ########## 核心修改：组件内分页弹窗（替代原全局弹窗） ########## -->
         <!-- 弹窗容器：absolute定位（组件内），点击外部可关闭 -->
@@ -148,9 +150,9 @@
                                 class="app-icon cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg"
                                 @click.stop="handleItemClick(child)">
                                 <div
-                                    class="icon-wrapper w-full aspect-square rounded-lg bg-white flex items-center justify-center shadow-md overflow-hidden">
+                                    class="icon-wrapper w-80px h-80px aspect-square rounded-lg bg-white flex items-center justify-center shadow-md overflow-hidden">
                                     <img v-if="getCachedImageUrl(child)" :src="getCachedImageUrl(child)"
-                                        alt="Child icon" class="w-full h-full object-cover"
+                                        alt="Child icon" class="w-full h-full object-cover object-center"
                                         @error="handleImageError(child)">
                                     <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400"
@@ -214,7 +216,8 @@
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">物品ID</h4>
-                                <p class="text-gray-800 font-mono text-sm">{{ currentPopupItem?.info?.id || '未知' }}</p>
+                                <p class="text-gray-800 font-mono text-sm">{{ currentPopupItem?.info?.id || '未知' }}
+                                </p>
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">描述信息</h4>
@@ -226,13 +229,15 @@
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">更新时间时间</h4>
-                                <p class="text-gray-800">{{ new Date(currentPopupItem?.info?.updatedAt).toLocaleString()
-                                }}</p>
+                                <p class="text-gray-800">{{ new
+                                    Date(currentPopupItem?.info?.updatedAt).toLocaleString()
+                                    }}</p>
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">创建时间</h4>
-                                <p class="text-gray-800">{{ new Date(currentPopupItem?.info?.createdAt).toLocaleString()
-                                }}</p>
+                                <p class="text-gray-800">{{ new
+                                    Date(currentPopupItem?.info?.createdAt).toLocaleString()
+                                    }}</p>
                             </div>
                         </div>
                     </div>
@@ -270,6 +275,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 const api = useUserApi();
+const noPreviewImg = 'data:image/png;base64,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';
 
 // 原有Props和Emits（新增popup-close事件，可选）
 const props = defineProps({
@@ -277,7 +283,7 @@ const props = defineProps({
     tree: { type: Array, default: () => [] },
     currentLocation: { type: String, default: 'root' }
 });
-const cacheItems = {};
+var cacheItems = {};
 const scanItems = (children) => {
     if (Array.isArray(children)) {
         children.forEach(e => {
@@ -299,13 +305,7 @@ const isTouching = ref(false);
 const startX = ref(0);
 const currentTranslate = ref(0);
 const iconSize = 80;
-const defaultBackground = 'https://picsum.photos/id/456/1080/1920';
-const defaultIcons = [
-    'https://picsum.photos/seed/item1/200/200',
-    'https://picsum.photos/seed/item2/200/200',
-    'https://picsum.photos/seed/item3/200/200',
-    'https://picsum.photos/seed/item4/200/200',
-];
+const defaultBackground = new URL(location.href).searchParams.get('bg') || 'https://picsum.photos/id/456/1080/1920';
 
 // ########## 弹窗核心状态（修改为单一弹窗） ##########
 const showItemPopup = ref(false); // 弹窗显示开关
@@ -337,7 +337,7 @@ onMounted(() => {
 const imageCache = ref({});
 const loadingUrls = new Set();
 const getItemImage = (item) => {
-    if (!item.imageUrl) item.imageUrl = defaultIcons[Math.floor(Math.random() * defaultIcons.length)];
+    if (!item.imageUrl) item.imageUrl = noPreviewImg;
     return item.imageUrl;
 };
 const urlToBase64 = (url) => new Promise((resolve, reject) => {
@@ -367,7 +367,7 @@ const loadAndCacheImage = async (url) => {
         imageCache.value[url] = base64;
         return base64;
     } catch (err) {
-        const placeholder = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwMCIgZD0iTTExIDhoMnY2aC0ydi02em0xIDExaC0ydi05aDJ2OXptLTggMkg1YTIgMiAwIDAgMC0yIDJ2MTRhMiAyIDAgMCAwIDIgMmgxNmEyIDIgMCAwIDAgMi0yVjVhMiAyIDAgMCAwLTItMkg5em0wIDE0VjdsOCA0LTggNHoiLz48L3N2Zz4=';
+        const placeholder = noPreviewImg;
         imageCache.value[url] = placeholder;
         return placeholder;
     } finally {
@@ -375,13 +375,20 @@ const loadAndCacheImage = async (url) => {
     }
 };
 const getCachedImageUrl = (item) => {
-    const url = getItemImage(item);
-    if (!imageCache.value[url] && !loadingUrls.has(url)) loadAndCacheImage(url);
-    return imageCache.value[url];
+    const cacheItem = cacheItems[item.id];
+    // 拿到缓存中的预览图url，如果没有就使用默认图url
+    const imageId = item.imageId || cacheItem.imageId;
+    const url = imageId ? `/api/v1/items/${item.id}/attachments/${imageId}` : getItemImage(item);
+    item.imageUrl = url;
+    if (!url.startsWith('data:image')) {
+        if (!imageCache.value[url] && !loadingUrls.has(url)) loadAndCacheImage(url);
+        return imageCache.value[url];
+    }
+    return url;
 };
 const handleImageError = (item) => {
     const url = getItemImage(item);
-    imageCache.value[url] = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwMCIgZD0iTTExIDhoMnY2aC0ydi02em0xIDExaC0ydi05aDJ2OXptLTggMkg1YTIgMiAwIDAgMC0yIDJ2MTRhMiAyIDAgMCAwIDIgMmgxNmEyIDIgMCAwIDAgMi0yVjVhMiAyIDAgMCAwLTItMkg5em0wIDE0VjdsOC4wMSA0LTguMDEgNHoiLz48L3N2Zz4=';
+    imageCache.value[url] = noPreviewImg;
 };
 
 // ########## 原有页面切换逻辑（不变） ##########
@@ -407,20 +414,70 @@ const handleMouseUp = (e) => {
 
 // ########## 原有编辑背景/添加物品逻辑（不变） ##########
 const openBackgroundSelector = () => {
-    const currentLoc = locations.value[currentPage.value];
-    if (!currentLoc) return;
-    const newBg = prompt('请输入背景图片URL:', currentLoc.backgroundImage || defaultBackground);
+    const newBg = prompt('请输入默认背景图片URL:', defaultBackground);
     if (newBg) {
-        const updatedLocs = [...locations.value];
-        updatedLocs[currentPage.value].backgroundImage = newBg;
-        locations.value = updatedLocs;
-        emit('update-tree', updatedLocs);
+        let lu = new URL(location.href);
+        lu.searchParams.set('bg', newBg);
+        location.href = lu.href;
     }
+    // const currentLoc = locations.value[currentPage.value];
+    // if (!currentLoc) return;
+    // const newBg = prompt('请输入背景图片URL:', currentLoc.backgroundImage || defaultBackground);
+    // if (newBg) {
+    //     const updatedLocs = [...locations.value];
+    //     updatedLocs[currentPage.value].backgroundImage = newBg;
+    //     locations.value = updatedLocs;
+    //     emit('update-tree', updatedLocs);
+    // }
 };
 const handleAddItem = () => {
     const currentLoc = locations.value[currentPage.value];
     if (currentLoc) emit('add-item', currentLoc.id);
 };
+
+// 初始化拿到所有的数据
+// var allItem = {};
+const getAllItem = (pageSize) => {
+    api.items.getAll({
+        q: "",
+        negateLabels: false,
+        onlyWithoutPhoto: false,
+        onlyWithPhoto: false,
+        includeArchived: false,
+        page: 1,
+        pageSize: pageSize ?? 1,
+        orderBy: 'name',
+    }).then(resp => {
+        if (resp.error) {
+            toast.error(t("items.toast.failed_load_item"));
+            return;
+        }
+        const data = resp.data;
+        if (pageSize && data.total <= pageSize) {
+            cacheItems = {};
+            data.items.forEach(e => {
+                // 因为与首次读取的数据不同，导致图片预览图很难重新加载，所以需要手动赋值，并且生成图片地址
+                if (cacheItems[e.id]) {
+                    let i = cacheItems[e.id];
+                    for (const k in e) {
+                        i[k] = e[k];
+                    }
+                    if (e.imageId) {
+                        i.imageUrl = `/api/v1/items/${e.id}/attachments/${e.imageId}`;
+                    }
+                } else {
+                    cacheItems[e.id] = e
+                }
+            });
+        } else {
+            getAllItem(data.total + 10)
+        }
+    }).catch(err => {
+        return;
+    })
+}
+// 获取所有数据
+getAllItem();
 
 // ########## 弹窗核心交互逻辑（修改为单一弹窗） ##########
 // 1. 点击图标打开文件夹
@@ -490,7 +547,7 @@ const handleItemClick = (item) => {
         }
     }
     // 添加缓存
-    if (cacheItems[item.id] != item) cacheItems[item.id] = item;
+    if (!cacheItems[item.id]) cacheItems[item.id] = item;
     // 直接设置当前弹窗物品
     currentPopupItem.value = item;
     showItemPopup.value = true;
@@ -535,7 +592,7 @@ const getAttachmentUrl = (popupItem, attachment) => {
 
 // 处理图片加载错误
 const handleAttachmentError = (event) => {
-    event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTIiIGR5PSIwLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPua1geahhjwvdGV4dD48L3N2Zz4=';
+    event.target.src = noPreviewImg;
 };
 
 // 初始化轮播图
@@ -605,8 +662,8 @@ const closeFullscreen = () => {
 
 </script>
 
+<!-- 原有样式 -->
 <style scoped>
-/* 原有样式（不变） */
 .mobile-desktop-container {
     width: 100%;
     height: calc(100vh - 4rem);
@@ -728,10 +785,8 @@ const closeFullscreen = () => {
 }
 </style>
 
+<!-- Swiper 样式定制 -->
 <style scoped>
-/* Swiper 样式定制 */
-
-/* Swiper 样式定制 */
 .swiper-container {
     position: relative;
     /* 添加相对定位 */
@@ -820,9 +875,8 @@ const closeFullscreen = () => {
 }
 </style>
 
+<!-- 全屏图片查看器样式 -->
 <style scoped>
-/* 全屏图片查看器样式 */
-
 .fullscreen-image-viewer {
     z-index: 50;
     cursor: zoom-out;
@@ -869,5 +923,18 @@ const closeFullscreen = () => {
 .fullscreen-image-viewer button:hover {
     transform: scale(1.1);
     background-color: rgba(0, 0, 0, 0.8);
+}
+</style>
+
+<style>
+.image-container {
+    width: 80px;
+    height: 80px;
+    overflow: hidden;
+    /* 隐藏超出容器的部分 */
+    border: 0px solid #ddd;
+    /* 可选：容器边框 */
+    border-radius: 8px;
+    /* 可选：圆角 */
 }
 </style>
