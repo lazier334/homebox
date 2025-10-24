@@ -13,11 +13,9 @@
                     backgroundPosition: 'center'
                 }">
                 <div class="page-header bg-black/30 text-white p-2 backdrop-blur-sm">
-                    <h2 class="text-lg font-medium">{{ location.name }}</h2>
-                </div>
-                <div class="page-content p-4 overflow-y-auto h-[calc(100%-40px)]">
-                    <div class="icon-grid grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                        <div v-for="(item, itemIndex) in location.children" :key="item.id"
+                    <h1 class="text-3xl font-medium">{{ location.name }}</h1>
+                    <div class="flex overflow-x-auto space-x-3 py-2 scrollbar-hide">
+                        <div v-for="(item, itemIndex) in moveStagedItems" :key="item.id"
                             class="app-icon cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg"
                             :style="{
                                 left: item.position?.left || null,
@@ -25,6 +23,15 @@
                                 width: `${iconSize}px`
                             }" :data-id="item.id" :data-location-id="location.id" @click.stop="handleItemClick(item)">
                             <!-- <div class="icon-wrapper w-80px h-80px aspect-square rounded-lg bg-white/80 flex items-center justify-center shadow-md overflow-hidden"> -->
+
+                            <!-- 右上角控制按钮 -->
+                            <button v-if="moveItemsMode"
+                                class="absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-lg transition-all duration-200 z-20"
+                                :class="isItemStaged(item) ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+                                @click.stop="toggleStagedItem(item)">
+                                {{ isItemStaged(item) ? '-' : '+' }}
+                            </button>
+
                             <div class="image-container">
                                 <img v-if="getCachedImageUrl(item)" :src="getCachedImageUrl(item)" alt="Item icon"
                                     class="w-full h-full object-cover" @error="handleImageError(item)">
@@ -36,11 +43,79 @@
                                     </svg>
                                 </div>
                             </div>
+
                             <div class="icon-label w-full text-center text-xs truncate text-white mt-1 drop-shadow-md">
                                 {{ item.name }}
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- moveItemsMode -->
+                <div class="page-content p-4 overflow-y-auto h-[calc(100%-40px)]">
+                    <div class="icon-grid grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4">
+
+                        <div v-if="moveItemsMode"
+                            class="app-icon cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                            :style="{
+                                left: addItem.position?.left || null,
+                                top: addItem.position?.top || null,
+                                width: `${iconSize}px`
+                            }" :data-id="addItem.id" :data-location-id="location.id"
+                            @click.stop="moveStagedItemsApi(void 0, location)">
+
+                            <div class="image-container">
+                                <img v-if="getCachedImageUrl(addItem)" :src="getCachedImageUrl(addItem)" alt="Item icon"
+                                    class="w-full h-full object-cover" @error="handleImageError(addItem)">
+                                <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div class="icon-label w-full text-center text-xs truncate text-white mt-1 drop-shadow-md">
+                                {{ addItem.name }}
+                            </div>
+                        </div>
+
+                        <div v-for="(item, itemIndex) in location.children" :key="item.id"
+                            class="app-icon cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                            :style="{
+                                left: item.position?.left || null,
+                                top: item.position?.top || null,
+                                width: `${iconSize}px`
+                            }" :data-id="item.id" :data-location-id="location.id" @click.stop="handleItemClick(item)">
+                            <!-- <div class="icon-wrapper w-80px h-80px aspect-square rounded-lg bg-white/80 flex items-center justify-center shadow-md overflow-hidden"> -->
+
+                            <!-- 右上角控制按钮 -->
+                            <button v-if="moveItemsMode"
+                                class="absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-lg transition-all duration-200 z-20"
+                                :class="isItemStaged(item) ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+                                @click.stop="toggleStagedItem(item)">
+                                {{ isItemStaged(item) ? '-' : '+' }}
+                            </button>
+
+                            <div class="image-container">
+                                <img v-if="getCachedImageUrl(item)" :src="getCachedImageUrl(item)" alt="Item icon"
+                                    class="w-full h-full object-cover" @error="handleImageError(item)">
+                                <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div class="icon-label w-full text-center text-xs truncate text-white mt-1 drop-shadow-md">
+                                {{ item.name }}
+                            </div>
+                        </div>
+                    </div>
+
                     <div v-if="location.children.length === 0" class="empty-state">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-70" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -62,11 +137,20 @@
                 }" @click="currentPage = index" :title="location.name"></button>
         </div>
         <button
-            class="edit-bg-btn absolute top-12 right-4 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors z-10"
-            @click="openBackgroundSelector">
+            class="edit-bg-btn absolute top-2 right-4 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors z-10"
+            @click="moveItems">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path
                     d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 7.757L3 16.136V19h2.864l8.379-8.379-2.864-2.864z" />
+            </svg>
+        </button>
+        <button
+            class="edit-bg-btn absolute top-2 right-16 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors z-10"
+            @click="editBackgroundUrl">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                    clip-rule="evenodd" />
             </svg>
         </button>
         <!--         
@@ -145,10 +229,41 @@
                     <!-- 页面1：文件夹子项（网格布局，模仿手机桌面） -->
                     <div class="popup-page popup-items-page flex-shrink-0 w-full h-full p-4 overflow-y-auto bg-gray-50">
                         <div class="grid grid-cols-4 sm:grid-cols-5 gap-4">
+
+                            <!-- 添加项 -->
+                            <div class="app-icon cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                                v-if="moveItemsMode" @click.stop="moveStagedItemsApi(currentPopupItem)">
+                                <div
+                                    class="icon-wrapper w-80px h-80px aspect-square rounded-lg bg-white flex items-center justify-center shadow-md overflow-hidden">
+                                    <img v-if="getCachedImageUrl(addItem)" :src="getCachedImageUrl(addItem)"
+                                        alt="Child icon" class="w-full h-full object-cover object-center"
+                                        @error="handleImageError(addItem)">
+                                    <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7m-4 4h-10" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="icon-label w-full text-center text-xs truncate text-gray-800 mt-1">
+                                    {{ addItem.name }}
+                                </div>
+                            </div>
+
                             <!-- 子项图标（点击打开子文件夹/物品） -->
                             <div v-for="(child, idx) in currentPopupItem?.children || []" :key="`child-${idx}`"
                                 class="app-icon cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg"
                                 @click.stop="handleItemClick(child)">
+
+                                <!-- 右上角控制按钮 -->
+                                <button v-if="moveItemsMode"
+                                    class="absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-sm font-bold flex items-center justify-center shadow-lg transition-all duration-200 z-20"
+                                    :class="isItemStaged(child) ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+                                    @click.stop="toggleStagedItem(child)">
+                                    {{ isItemStaged(child) ? '-' : '+' }}
+                                </button>
+
                                 <div
                                     class="icon-wrapper w-80px h-80px aspect-square rounded-lg bg-white flex items-center justify-center shadow-md overflow-hidden">
                                     <img v-if="getCachedImageUrl(child)" :src="getCachedImageUrl(child)"
@@ -231,13 +346,13 @@
                                 <h4 class="text-xs text-gray-500 mb-1">更新时间时间</h4>
                                 <p class="text-gray-800">{{ new
                                     Date(currentPopupItem?.info?.updatedAt).toLocaleString()
-                                    }}</p>
+                                }}</p>
                             </div>
                             <div class="info-item p-3 border-b border-gray-200">
                                 <h4 class="text-xs text-gray-500 mb-1">创建时间</h4>
                                 <p class="text-gray-800">{{ new
                                     Date(currentPopupItem?.info?.createdAt).toLocaleString()
-                                    }}</p>
+                                }}</p>
                             </div>
                         </div>
                     </div>
@@ -276,6 +391,11 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 const api = useUserApi();
 const noPreviewImg = 'data:image/png;base64,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';
+const addItem = {
+    id: '-9',
+    name: '添加',
+    defImageUrl: 'data:image/webp;base64,UklGRqYDAABXRUJQVlA4IJoDAABQKACdASosASwBPp1OokylpCMiJbKICLATiWlu4W/RG/OZaGfCP3aiBHQbkRV8M28g30t0yXsY/UYOhHlBQR5QUEeUFBHlBQR5QUEeUFAtxVnj/TG9xwoHKRA/jT5W7Nq42qLj5x4MoL38J1vK3ZtXG33uTRIId19o6rmiPdVwUEeUFBF7gp5yVj7RvvUBqtcLdknFLhEYSTWSzBFhysUtsJ8NzA0MaHdVspFx7yjqx9o6fMdDAP1/XIvWUURCh1Y+0dVui066DNIn1JSwT+qfNQp1mzkPLgCby8eVlgLiemaPTTxRP8h+pOLBCeE4sYA3mLBvK3ZtV1AcLYL2jqx9o4WwVjkId19o6saQhgIm9IIqckB7Nq46zat/QX0tVAcQb5FUV1BQUEeUFBHcDSKtUeru0YwI8oKCPKCgjygoI8oKCPKCgjygoFgAAP7+DIAC/BSVfZ3g8QKevzJ61CEvxn+Od4GMYK3f0C1+P5oweCIPgpSOmz1QD+c2QR/Td4BAA6LvQDMpFTW772/JzFhMBW3MFkBENReH1Ew7MSnKutPppbbnficbO12hkYl7usCQ25hRYvayi5ytYhGRYDiR0DcJMulINcn2FqaFxOdJ8krO4vhLidU5GvNAAYhOn1XV/6z0VwRbj4lDFRZ+k6NIPxfVWeV+GN24qtMZd29H4TypNxcV6HxYOrn70rzrR7/xZY3k49OjDC/rAwYq7M/F2Rn9piTnCVG6R5AAjsWQJEgtC/IAArYgGk0vlk1aC6Yl94RPwWmwACsbOL11RrZ2yrtERdfAAQV0KNrjczaxlaQuCwAvVwEl/ttiLFJdY66AR75JlhXT6sV/gEt61raCX6+36cqLg53aP0pXcFS0S45PQ54NQbK7AAGbzIDLAJKhHiNEWJhoQ8SKlZQns9DGuBQk/YVx/mUX0cjVieU1bAwrrz9M2fHH+TH2xZtjBNoDYaynpDfyzs6r4LgvYDXEflknYVz+KX+c5xfvWXegepjiXP7t1FxHlhdWMEZwACYEueoLzPgxGFg5MLScBiaWj2Lh9OZ6OzAfSI6S1LC+keuq19GIlzsR+eq9v1feGoL4AGDr12gR8xcYNswfcczdpLrF+aBtJzK2PpCc/C65Z08VD2aYFMiVTSzPkDvwAMi2DcW872EvK7PoVkibz+WGC0hM4By89bm0aDXdHLhZWbBHQX9lcCfQvXF11IgpNpD7tnmxkAAAAAAA'
+}
 
 // 原有Props和Emits（新增popup-close事件，可选）
 const props = defineProps({
@@ -375,6 +495,7 @@ const loadAndCacheImage = async (url) => {
     }
 };
 const getCachedImageUrl = (item) => {
+    if (item.defImageUrl) return item.defImageUrl;
     const cacheItem = cacheItems[item.id];
     // 拿到缓存中的预览图url，如果没有就使用默认图url
     const imageId = item.imageId || cacheItem.imageId;
@@ -413,7 +534,7 @@ const handleMouseUp = (e) => {
 };
 
 // ########## 原有编辑背景/添加物品逻辑（不变） ##########
-const openBackgroundSelector = () => {
+const editBackgroundUrl = () => {
     const newBg = prompt('请输入默认背景图片URL:', defaultBackground);
     if (newBg) {
         let lu = new URL(location.href);
@@ -658,6 +779,121 @@ const openFullscreenImage = (attachment) => {
 const closeFullscreen = () => {
     showFullscreenImage.value = false;
 };
+
+
+const moveItemsMode = ref(false);
+const moveItems = () => {
+    // 移动物品模式
+    moveItemsMode.value = !moveItemsMode.value;
+    if (!moveItemsMode.value) {
+        clearStagedItems();
+    }
+}
+
+const moveStagedItems = ref([]);
+// 检查项目是否在暂存数组中
+const isItemStaged = (item) => {
+    return moveStagedItems.value.includes(item);
+}
+const removeItemStaged = (item) => {
+    const index = moveStagedItems.value.indexOf(item);
+    return index < 0 ? null : moveStagedItems.value.splice(index, 1);
+}
+const toggleStagedItem = (item) => {
+    const index = moveStagedItems.value.indexOf(item);
+    if (-1 < index) {
+        // 如果已在暂存数组中，则移除
+        moveStagedItems.value.splice(index, 1);
+    } else {
+        // 如果不在暂存数组中，则添加
+        moveStagedItems.value.unshift(item);
+    }
+}
+// 清空暂存数组（可选方法）
+const clearStagedItems = () => {
+    moveStagedItems.value.splice(0, moveStagedItems.value.length);
+}
+// 获取暂存项目的数量（可选方法）
+const getStagedItemsCount = () => {
+    return moveStagedItems.value.length;
+}
+// 获取暂存项目的数量（可选方法）
+const moveStagedItemsApi = async (popupItem, locationItem) => {
+    // console.log('popupItem, locationItem', popupItem, locationItem)
+    // console.log('moveStagedItems...', moveStagedItems)
+    let locationTarget = null;
+    if (typeof locationItem == 'object' && locationItem.id && locationItem.name) {
+        locationTarget = {
+            id: locationItem.id,
+            name: locationItem.name,
+            treeString: locationItem.name
+        }
+    }
+    let itemTarget = null;
+    if (popupItem?.id) {
+        const { data, error } = await api.items.get(popupItem.id);
+        if (!error) {
+            itemTarget = {};
+            [
+                "id",
+                "assetId",
+                "name",
+                "description",
+                "quantity",
+                "insured",
+                "archived",
+                "createdAt",
+                "updatedAt",
+                "purchasePrice",
+                "labels",
+                "soldTime"
+            ].forEach(k => itemTarget[k] = data[k]);
+        }
+    }
+
+    const items = [...moveStagedItems.value];
+    for (const item of items) {
+        if (item.id == itemTarget?.id) {
+            // 跳过重复的id
+            continue;
+        }
+
+        // 通过api拿到当前项目的具体内容，然后修改后提交
+        const { data, error } = await api.items.get(item.id);
+        if (error) {
+            toast.error(t("items.toast.failed_load_item"));
+        } else {
+            const payload = {
+                ...data,
+                locationId: data.location?.id,
+                labelIds: data.labelIds,
+                parentId: itemTarget ? itemTarget.id : null,
+                assetId: data.assetId,
+                purchasePrice: data.purchasePrice ?? 0,
+                soldPrice: data.soldPrice ?? 0,
+                purchaseTime: data.purchaseTime,
+            };
+            if (itemTarget) {
+                payload.parentId = itemTarget.id;
+            }
+            if (locationTarget) {
+                payload.location = locationTarget;
+            }
+
+            const { error } = await api.items.update(item.id, payload);
+            if (error) {
+                toast.error(t("items.toast.failed_save"));
+                return;
+            } else {
+                // 清理
+                removeItemStaged(item);
+            }
+        }
+    }
+    // TODO 重新获取当前容器的数据
+
+    toast.success(t("items.toast.item_saved"));
+}
 
 
 </script>
