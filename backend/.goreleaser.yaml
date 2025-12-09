@@ -44,17 +44,17 @@ builds:
     #     {{- else if eq .Arch "386" }}nodynamic
     #     {{- else if eq .Os "freebsd" }}nodynamic
     #     {{ end }}
-
-signs:
-  - cmd: cosign
-    signature: "${artifact}.sigstore.json"
-    args:
-      - sign-blob
-      - "--bundle=${signature}"
-      - "${artifact}"
-      - "--yes"
-    artifacts: checksum
-    output: true
+# 关闭签名
+# signs:
+#   - cmd: cosign
+#     signature: "${artifact}.sigstore.json"
+#     args:
+#       - sign-blob
+#       - "--bundle=${signature}"
+#       - "${artifact}"
+#       - "--yes"
+#     artifacts: checksum
+#     output: true
 archives:
   - formats: [ 'tar.gz' ]
     # this name template makes the OS and Arch compatible with the results of uname.
