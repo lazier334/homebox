@@ -12,7 +12,7 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      # - windows
+      - windows
       # - darwin
       # - freebsd
     goarch:
@@ -66,9 +66,9 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     # use zip for windows archives
-    # format_overrides:
-    # - goos: windows
-    #   formats: [ 'zip' ]
+    format_overrides:
+    - goos: windows
+      formats: [ 'zip' ]
 sboms:
   - artifacts: archive
 release:
