@@ -25,7 +25,9 @@ tip: `.goreleaser.yaml` 文件中仅打包 linux 的 amd64 和 arm64 两个版�
 > 基础目录列表如下:
 > * homebox
 > * Dockerfile
-> * docker-compose.yml
+> * docker-compose.yml  
+> 
+> 可能需要手动把配置文件 /data/config.yml 复制进去
 
 ### 1. 创建文件 Dockerfile
 > 创建 Dockerfile 文件并写入以下内容
@@ -76,3 +78,6 @@ services:
 ```shell
 docker-compose up -d
 ```
+
+### tip: 可能需要手动把配置文件 /data/config.yml 复制进去
+> 可能需要手动把配置文件 /data/config.yml 复制进去
